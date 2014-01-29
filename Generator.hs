@@ -1,8 +1,9 @@
 import System.Environment
 import System.IO
 import Control.Monad
+import Data.String.Utils
 import qualified Data.ByteString as Bs
-import qualified Data.ByteString.Char8 as B
+import qualified Data.ByteString.UTF8 as B
 
 data PropertyType = String | Int | Bool | Float | StringList | IntList
 
@@ -26,37 +27,19 @@ data Class = Class {
 		}
 
 wClass cls = do
-	let headerContent = B.pack . header $ cls
-	Bs.writeFile headerFileName headerContent
-	let sourceContent = B.pack . source $ cls
-	Bs.writeFile sourceFileName sourceContent
+	template <- Bs.readFile "templates/cpp-header.st"
+	let templateContent = B.toString template
+	
+	propertyTemplate <- Bs.readFile "templates/cpp-property.st"
+	let replaced = replace "$className$" (cName cls) templateContent
+	let replacedParent = replace "$parentName$" (cParent cls) replaced
+	Bs.writeFile headerFilePath (B.fromString replacedParent)
 		where
 			className = cName cls
-			headerFileName = className ++ ".h"
-			sourceFileName = className ++ ".cpp"
-
-include h = "#include " ++ "\"" ++ h ++ ".h\""
-
-source cls = do
-	include (cName cls) ++ "\n\n" ++ cName cls ++ "::" ++ cName cls ++ "(){}\n" ++ cName cls ++ "::~" ++ cName cls ++ "(){}\n"
-
-header cls = 
-	declarationStart cls ++ public ++ properties (cProperties cls) ++ constructor cls ++ destructor cls ++ declarationEnd cls
-
-declarationStart cls =
-	"class " ++ cName cls ++ " : public " ++ cParent cls ++ " {\n"
-
-public =
-	"public:\n"
+			headerFilePath = "gen/" ++ className ++ ".h"
+			sourceFilePath = "gen/" ++ className ++ ".cpp"
 
 properties ps =
 	foldl (++) "" (map addProperty ps)
 		where
 			addProperty p = "  " ++ typeString(pType p) ++ " " ++ pName p ++ ";\n"
-
-constructor cls = "  " ++ cName cls ++ "();\n"
-
-destructor cls = "  virtual ~" ++ cName cls ++ "();\n"
-
-declarationEnd cls = "};\n"
-

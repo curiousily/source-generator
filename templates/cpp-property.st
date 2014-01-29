@@ -1,0 +1,1 @@
+$propertyType$ $propertyName$;

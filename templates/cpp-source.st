@@ -1,0 +1,8 @@
+$className$::$className$() {
+
+}
+
+$className$::~$className$() {
+
+}
+
