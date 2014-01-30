@@ -27,21 +27,35 @@ data Class = Class {
 		}
 
 wClass cls = do
-	propertyTemplate <- Bs.readFile "templates/cpp-property.st"
-	let propertiesString = replaceProperties (cProperties cls) (B.toString propertyTemplate)
-	headerTmpl <- headerTemplate
-	let replacedProperties = replace "$properties$" propertiesString headerTmpl
-	let replaced = replace "$className$" (cName cls) replacedProperties
-	let replacedParent = replace "$parentName$" (cParent cls) replaced
-	Bs.writeFile outHeaderPath (B.fromString replacedParent)
+	header <- headerContent cls
+	Bs.writeFile outHeaderPath header
+	sourceTmpl <- sourceTemplate
+	let replacedSource = replace "$className$" (cName cls) sourceTmpl
+	Bs.writeFile outSourcePath (B.fromString replacedSource)
 		where
 			className = cName cls
 			outHeaderPath = "gen/" ++ className ++ ".h"
 			outSourcePath = "gen/" ++ className ++ ".cpp"
+headerContent cls = do
+	propertyTemplate <- Bs.readFile "templates/cpp-property.st"
+	let propertiesString = replaceProperties (cProperties cls) (B.toString propertyTemplate)
+	headerTmpl <- headerTemplate
+	let content = replaceAll ["$properties$", "$className$", "$parentName$"] [propertiesString, cName cls, cParent cls] headerTmpl 
+	return $ B.fromString content
+	
 
 headerTemplate = do
 	template <- Bs.readFile "templates/cpp-header.st"
 	return $ B.toString template
+
+sourceTemplate = do
+	template <- Bs.readFile "templates/cpp-source.st"
+	return $ B.toString template
+
+replaceAll [] _ t = t
+replaceAll (x:xs) (y:ys) t = replaceAll xs ys t'
+	where
+		t' = replace x y t
 
 replaceProperties ps t =
 	foldl (++) "" (map addProperty ps)
