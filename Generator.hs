@@ -27,20 +27,30 @@ data Class = Class {
 		}
 
 wClass cls = do
-	header <- headerContent cls
-	Bs.writeFile outHeaderPath header
-	sourceTmpl <- sourceTemplate
-	let replacedSource = replace "$className$" (cName cls) sourceTmpl
-	Bs.writeFile outSourcePath (B.fromString replacedSource)
+	wClassFile outHeaderPath headerContent cls
+	wClassFile outSourcePath sourceContent cls
 		where
 			className = cName cls
 			outHeaderPath = "gen/" ++ className ++ ".h"
 			outSourcePath = "gen/" ++ className ++ ".cpp"
+
+wClassFile path contentF cls = do
+	content <- contentF cls	
+	Bs.writeFile path content
+
 headerContent cls = do
-	propertyTemplate <- Bs.readFile "templates/cpp-property.st"
-	let propertiesString = replaceProperties (cProperties cls) (B.toString propertyTemplate)
+	propertiesContent <- propertiesContent cls
 	headerTmpl <- headerTemplate
-	let content = replaceAll ["$properties$", "$className$", "$parentName$"] [propertiesString, cName cls, cParent cls] headerTmpl 
+	let content = replaceAll ["$properties$", "$className$", "$parentName$"] [propertiesContent, cName cls, cParent cls] headerTmpl 
+	return $ B.fromString content
+
+propertiesContent cls = do
+	propertyTemplate <- Bs.readFile "templates/cpp-property.st"
+	return $ replaceProperties (cProperties cls) (B.toString propertyTemplate)
+
+sourceContent cls = do
+	sourceTmpl <- sourceTemplate
+	let content = replace "$className$" (cName cls) sourceTmpl
 	return $ B.fromString content
 	
 
