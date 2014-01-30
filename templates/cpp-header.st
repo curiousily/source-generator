@@ -4,6 +4,6 @@ public:
 	$className$();
 	virtual ~$className$();
 
-	$properties$
+$properties$
 
 };

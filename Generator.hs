@@ -27,19 +27,25 @@ data Class = Class {
 		}
 
 wClass cls = do
-	template <- Bs.readFile "templates/cpp-header.st"
-	let templateContent = B.toString template
-	
 	propertyTemplate <- Bs.readFile "templates/cpp-property.st"
-	let replaced = replace "$className$" (cName cls) templateContent
+	let propertiesString = replaceProperties (cProperties cls) (B.toString propertyTemplate)
+	headerTmpl <- headerTemplate
+	let replacedProperties = replace "$properties$" propertiesString headerTmpl
+	let replaced = replace "$className$" (cName cls) replacedProperties
 	let replacedParent = replace "$parentName$" (cParent cls) replaced
-	Bs.writeFile headerFilePath (B.fromString replacedParent)
+	Bs.writeFile outHeaderPath (B.fromString replacedParent)
 		where
 			className = cName cls
-			headerFilePath = "gen/" ++ className ++ ".h"
-			sourceFilePath = "gen/" ++ className ++ ".cpp"
+			outHeaderPath = "gen/" ++ className ++ ".h"
+			outSourcePath = "gen/" ++ className ++ ".cpp"
 
-properties ps =
+headerTemplate = do
+	template <- Bs.readFile "templates/cpp-header.st"
+	return $ B.toString template
+
+replaceProperties ps t =
 	foldl (++) "" (map addProperty ps)
 		where
-			addProperty p = "  " ++ typeString(pType p) ++ " " ++ pName p ++ ";\n"
+			addProperty p = replaceType p (replaceName p t) 
+			replaceType p t = replace "$propertyType$" (typeString(pType p)) t
+			replaceName p t = replace "$propertyName$" (pName p) t
