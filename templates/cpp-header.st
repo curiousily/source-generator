@@ -1,3 +1,5 @@
+$includes$
+
 class $className$ : public $parentName$ {
 	
 public:

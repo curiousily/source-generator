@@ -1,3 +1,5 @@
+#include "$className$.h"
+
 $className$::$className$() {
 
 }
