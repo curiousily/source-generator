@@ -11,7 +11,7 @@ Clone this repo
 git clone git@github.com:venelin/source-generator.git
 ```
 
-Install pcapriotti/optparse-applicative using ```cabal```
+Install [optparse-applicative](https://github.com/pcapriotti/optparse-applicative) using ```cabal```
 
 ```
 cabal install optparse-applicative
